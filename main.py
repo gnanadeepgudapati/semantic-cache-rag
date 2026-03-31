@@ -5,6 +5,8 @@ from config import settings
 from ingest import chunk_text
 from embed import embed_corpus, hash_embed
 from search import retrieve
+from bm25 import build_bm25, bm25_search
+from fusion import reciprocal_rank_fusion
 from openai import OpenAI
 
 app = FastAPI(title="RAG Journey API")
@@ -19,7 +21,6 @@ def health():
 @app.post("/ingest", response_model=IngestResponse)
 def ingest(request: IngestRequest):
     chunks = chunk_text(request.text, settings.chunk_size, settings.overlap)
-    
     for i, chunk in enumerate(chunks):
         corpus.append({
             "id": f"{request.title}_chunk{i}",
@@ -27,27 +28,25 @@ def ingest(request: IngestRequest):
             "text": chunk,
             "embedding": hash_embed(chunk)
         })
-    
     return IngestResponse(
         message=f"Successfully ingested {request.title}",
         chunks_created=len(chunks)
     )
 
-
 @app.post("/query", response_model=QueryResponse)
 def query(request: QueryRequest):
     if not corpus:
-        return QueryResponse(
-            answer="No documents ingested yet.",
-            sources=[]
-        )
-    
-    results = retrieve(request.question, corpus, settings.top_k)
-    
+        return QueryResponse(answer="No documents ingested yet.", sources=[])
+
+    vector_results = retrieve(request.question, corpus, settings.top_k)
+    bm25_index = build_bm25(corpus)
+    bm25_results = bm25_search(request.question, corpus, bm25_index, settings.top_k)
+    results = reciprocal_rank_fusion(vector_results, bm25_results)[:settings.top_k]
+
     context = "\n\n---\n\n".join(
         f"[Source: {r['source']}]\n{r['text']}" for r in results
     )
-    
+
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
@@ -63,8 +62,7 @@ def query(request: QueryRequest):
             {"role": "user", "content": request.question},
         ],
     )
-    
+
     answer = response.choices[0].message.content
     sources = list(set(r["source"] for r in results))
-    
     return QueryResponse(answer=answer, sources=sources)
