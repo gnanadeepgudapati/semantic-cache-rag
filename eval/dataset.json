@@ -1,0 +1,12 @@
+[
+  {"question": "Who created Python?", "expected": "Guido van Rossum"},
+  {"question": "When was Python first released?", "expected": "1991"},
+  {"question": "What is Python named after?", "expected": "Monty Python"},
+  {"question": "What frameworks does Python use for web development?", "expected": "Django"},
+  {"question": "What year did Python 3 release?", "expected": "2008"},
+  {"question": "What is PyPI?", "expected": "Python Package Index"},
+  {"question": "What companies use Python?", "expected": "Google"},
+  {"question": "What is the Zen of Python?", "expected": "Tim Peters"},
+  {"question": "When did Python 2 reach end of life?", "expected": "2020"},
+  {"question": "What does dynamic typing mean?", "expected": "runtime"}
+]
