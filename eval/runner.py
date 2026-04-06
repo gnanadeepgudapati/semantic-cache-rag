@@ -11,7 +11,7 @@ from search import retrieve
 from bm25 import build_bm25, bm25_search
 from fusion import reciprocal_rank_fusion
 from response_parser import get_structured_response
-from Prompt import SYSTEM_PROMPT, build_user_prompt
+from rag_prompt import SYSTEM_PROMPT, build_user_prompt
 from openai import OpenAI
 from dotenv import load_dotenv
 
